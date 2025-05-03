@@ -13,6 +13,7 @@ class ProductDetailScreen extends StatefulWidget {
 }
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  bool isFavorite = false;
   Future<void> _callSeller(BuildContext context) async {
     final phoneNumber = '+250780600494';
     // Use proper URI encoding for phone numbers
@@ -32,7 +33,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Phone Call'),
-            content: const Text('Unable to make the call. Please check if you have granted phone call permissions to the app.'),
+            content: const Text(
+                'Unable to make the call. Please check if you have granted phone call permissions to the app.'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -56,11 +58,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Future<void> _messageOnWhatsApp() async {
     final phoneNumber = '250780600494'; // Remove the '+' for WhatsApp
-    final message = 'Hello, I am interested in your product: ${widget.product.name}';
-    
+    final message =
+        'Hello, I am interested in your product: ${widget.product.name}';
+
     // Try the universal WhatsApp URL format
-    final whatsappUrl = Uri.parse('whatsapp://send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}');
-    
+    final whatsappUrl = Uri.parse(
+        'whatsapp://send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}');
+
     try {
       if (await canLaunchUrl(whatsappUrl)) {
         await launchUrl(
@@ -69,7 +73,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         );
       } else {
         // Fallback to web URL if WhatsApp app URL fails
-        final webWhatsappUrl = Uri.parse('https://api.whatsapp.com/send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}');
+        final webWhatsappUrl = Uri.parse(
+            'https://api.whatsapp.com/send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}');
         if (await canLaunchUrl(webWhatsappUrl)) {
           await launchUrl(
             webWhatsappUrl,
@@ -90,7 +95,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Could not open WhatsApp. Please make sure it is installed.'),
+          content: Text(
+              'Could not open WhatsApp. Please make sure it is installed.'),
           duration: Duration(seconds: 3),
         ),
       );
@@ -149,9 +155,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.favorite_border),
+                        icon: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite ? Colors.red : null,
+                        ),
                         onPressed: () {
-                          // Add to favorites
+                          setState(() {
+                            isFavorite = !isFavorite;
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(isFavorite
+                                  ? 'Added to favorites'
+                                  : 'Removed from favorites'),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                          // TODO: Persist favorite status using a state management solution
                         },
                       ),
                       IconButton(
@@ -166,7 +186,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   Row(
                     children: [
                       Text(
-                        'frw ${widget.product.price.toStringAsFixed(2)}',
+                        'Frw ${widget.product.price.toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontSize: 20,
                           color: Colors.blue,
@@ -182,7 +202,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Text(
-                          'In Stock',
+                          'Still Available',
                           style: TextStyle(color: Colors.white),
                         ),
                       ),
@@ -232,7 +252,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           label: const Text('WhatsApp'),
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size(0, 50),
-                            backgroundColor: const Color(0xFF25D366), // WhatsApp green
+                            backgroundColor:
+                                const Color(0xFF25D366), // WhatsApp green
                           ),
                         ),
                       ),

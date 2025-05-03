@@ -4,8 +4,16 @@ import 'package:ntakomisiyo1/data/mock_products.dart';
 import 'package:ntakomisiyo1/providers/product_provider.dart';
 import 'package:ntakomisiyo1/screens/products/product_detail_screen.dart';
 
-class ProductListScreen extends StatelessWidget {
+class ProductListScreen extends StatefulWidget {
   const ProductListScreen({super.key});
+
+  @override
+  State<ProductListScreen> createState() => _ProductListScreenState();
+}
+
+class _ProductListScreenState extends State<ProductListScreen> {
+  // Map to track favorite status of each product
+  final Map<String, bool> _favorites = {};
 
   @override
   Widget build(BuildContext context) {
@@ -109,19 +117,34 @@ class ProductListScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           product.category,
-                          style: const TextStyle(color: Colors.grey, fontSize: 12),
+                          style:
+                              const TextStyle(color: Colors.grey, fontSize: 12),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       IconButton(
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
-                        icon: const Icon(Icons.favorite_border, size: 20),
+                        icon: Icon(
+                          _favorites[product.id] ?? false
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          size: 20,
+                          color: _favorites[product.id] ?? false
+                              ? Colors.red
+                              : null,
+                        ),
                         onPressed: () {
+                          setState(() {
+                            _favorites[product.id] =
+                                !(_favorites[product.id] ?? false);
+                          });
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Added to favorites'),
-                              duration: Duration(seconds: 2),
+                            SnackBar(
+                              content: Text(_favorites[product.id] ?? false
+                                  ? 'Added to favorites'
+                                  : 'Removed from favorites'),
+                              duration: const Duration(seconds: 2),
                             ),
                           );
                         },
