@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "494476539685",
+    "project_id": "ntakomisiyo1",
+    "storage_bucket": "ntakomisiyo1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:494476539685:android:14522dd62616f18d914ccc",
+        "android_client_info": {
+          "package_name": "com.example.ntakomisiyo1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDLnLwn4Ucx5pCN9yb513LHC3DZu8S_bk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
