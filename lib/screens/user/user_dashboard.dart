@@ -1,19 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:ntakomisiyo1/screens/products/add_product_screen.dart';
+import 'package:ntakomisiyo1/screens/products/product_list_screen.dart';
+import 'package:ntakomisiyo1/screens/products/user_products_screen.dart';
+import 'package:ntakomisiyo1/services/auth_service.dart';
+import 'package:ntakomisiyo1/models/user.dart';
 
-class UserDashboard extends StatelessWidget {
-  const UserDashboard({super.key});
+class UserDashboard extends StatefulWidget {
+  final User user;
 
+  const UserDashboard({super.key, required this.user});
+
+  @override
+  State<UserDashboard> createState() => _UserDashboardState();
+}
+
+class _UserDashboardState extends State<UserDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Seller Dashboard'),
+        title: const Text('User Dashboard'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/');
+            onPressed: () async {
+              await AuthService.logout();
+              if (mounted) {
+                Navigator.of(context).pushReplacementNamed('/');
+              }
             },
           ),
         ],
@@ -34,20 +48,20 @@ class UserDashboard extends StatelessWidget {
                       child: Icon(Icons.person, size: 40),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Welcome, User1',
-                      style: TextStyle(
+                    Text(
+                      'Welcome, ${widget.user.name}',
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const Text('user1@gmail.com'),
+                    Text(widget.user.phone),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 20),
-            
+
             // Quick Actions
             const Text(
               'Quick Actions',
@@ -67,7 +81,7 @@ class UserDashboard extends StatelessWidget {
                 _buildActionCard(
                   context,
                   'Add Product',
-                  Icons.add_box,
+                  Icons.add_circle,
                   () {
                     Navigator.push(
                       context,
@@ -80,25 +94,47 @@ class UserDashboard extends StatelessWidget {
                 _buildActionCard(
                   context,
                   'My Products',
-                  Icons.inventory,
+                  Icons.shopping_bag,
                   () {
-                    // TODO: Navigate to My Products
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const UserProductsScreen(),
+                      ),
+                    );
                   },
                 ),
                 _buildActionCard(
                   context,
-                  'Messages',
-                  Icons.message,
+                  'All products',
+                  Icons.shopping_cart,
                   () {
-                    // TODO: Navigate to Messages
+                    // TODO: Navigate to orders
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProductListScreen(),
+                      ),
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                            'This is all products available on our market!'),
+                      ),
+                    );
                   },
                 ),
                 _buildActionCard(
                   context,
-                  'Settings',
-                  Icons.settings,
+                  'Profile',
+                  Icons.person,
                   () {
-                    // TODO: Navigate to Settings
+                    // TODO: Navigate to profile
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Profile management coming soon!'),
+                      ),
+                    );
                   },
                 ),
               ],

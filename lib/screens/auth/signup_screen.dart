@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ntakomisiyo1/screens/auth/login_screen.dart';
+import 'package:ntakomisiyo1/services/auth_service.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -11,17 +12,50 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
     _nameController.dispose();
-    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleSignup() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        await AuthService.register(
+          _nameController.text,
+          _phoneController.text,
+          _passwordController.text,
+          context,
+        );
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString()),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    }
   }
 
   @override
@@ -64,18 +98,21 @@ class _SignupScreenState extends State<SignupScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              // Email Field
+              // Phone Field
               TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
                 decoration: const InputDecoration(
-                  labelText: 'Email',
+                  labelText: 'Phone Number',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
+                  prefixIcon: Icon(Icons.phone),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
+                    return 'Please enter your phone number';
+                  }
+                  if (!RegExp(r'^\+?[\d\s-]{10,}$').hasMatch(value)) {
+                    return 'Please enter a valid phone number';
                   }
                   return null;
                 },
@@ -123,18 +160,16 @@ class _SignupScreenState extends State<SignupScreen> {
               const SizedBox(height: 24),
               // Sign Up Button
               ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    // TODO: Implement signup logic
-                  }
-                },
+                onPressed: _isLoading ? null : _handleSignup,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text(
-                  'Sign Up',
-                  style: TextStyle(fontSize: 16),
-                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator()
+                    : const Text(
+                        'Sign Up',
+                        style: TextStyle(fontSize: 16),
+                      ),
               ),
               const SizedBox(height: 16),
               // Login Link

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ntakomisiyo1/providers/favorites_provider.dart';
 import 'package:ntakomisiyo1/screens/products/product_list_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:ntakomisiyo1/providers/product_provider.dart';
@@ -6,6 +7,7 @@ import 'package:ntakomisiyo1/data/mock_products.dart';
 import 'package:ntakomisiyo1/screens/auth/login_screen.dart';
 import 'package:ntakomisiyo1/screens/auth/signup_screen.dart';
 import 'package:ntakomisiyo1/screens/products/product_detail_screen.dart';
+import 'package:ntakomisiyo1/models/product.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,46 +28,77 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('NtaKomisiyo'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
-            },
-            child: const Text(
-              'Login',
-              style: TextStyle(color: Color.fromARGB(255, 7, 134, 172)),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: AppBar(
+          title: const Text(
+            'NtaKomisiyo',
+            style: TextStyle(fontSize: 20),
+          ),
+          actions: [
+            // Search button
+            IconButton(
+              icon: const Icon(Icons.search, size: 22),
+              onPressed: () {
+                // TODO: Implement search functionality
+              },
+              tooltip: 'Search',
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              constraints: const BoxConstraints(),
             ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SignupScreen()),
-              );
-            },
-            child: const Text(
-              'SignUp',
-              style: TextStyle(color: Color.fromARGB(255, 7, 134, 172)),
+            // Cart button with badge
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.shopping_cart, size: 22),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProductListScreen(),
+                      ),
+                    );
+                  },
+                  tooltip: 'Cart',
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  constraints: const BoxConstraints(),
+                ),
+                Positioned(
+                  right: 4,
+                  top: 4,
+                  child: Consumer<FavoritesProvider>(
+                    builder: (context, favoritesProvider, child) {
+                      if (favoritesProvider.favorites.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 14,
+                          minHeight: 14,
+                        ),
+                        child: Text(
+                          '${favoritesProvider.favorites.length}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // TODO: Implement search functionality
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.shopping_cart),
-            onPressed: () {
-              // TODO: Implement cart functionality
-            },
-          ),
-        ],
+            const SizedBox(width: 4),
+          ],
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -90,12 +123,11 @@ class _HomeScreenState extends State<HomeScreen> {
             }
 
             return SingleChildScrollView(
-              physics:
-                  const AlwaysScrollableScrollPhysics(), // Important for RefreshIndicator to work
+              physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Welcome Banner
+                  // Welcome Banner with Login/Signup buttons
                   Container(
                     padding: const EdgeInsets.all(20),
                     color: Colors.blue.shade50,
@@ -117,16 +149,55 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const ProductListScreen()),
-                            );
-                          },
-                          child: const Text('Start Shopping'),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: [
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const ProductListScreen(),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text('Start Shopping'),
+                                  ),
+                                  OutlinedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const LoginScreen(),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text('Login'),
+                                  ),
+                                  OutlinedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const SignupScreen(),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text('Sign Up'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -259,7 +330,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           product.imageUrl,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            return const Icon(Icons.error);
+                            // Fall back to local asset when network image fails
+                            return Image.asset(
+                              'assets/images/logo.png',
+                              fit: BoxFit.cover,
+                            );
                           },
                         )
                       : Image.asset(

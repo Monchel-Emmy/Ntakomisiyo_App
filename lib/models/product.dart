@@ -6,6 +6,7 @@ class Product {
   final String imageUrl;
   final String category;
   final String sellerId;
+  final String sellerPhone;
   final DateTime createdAt;
 
   Product({
@@ -16,6 +17,7 @@ class Product {
     required this.imageUrl,
     required this.category,
     required this.sellerId,
+    required this.sellerPhone,
     required this.createdAt,
   });
 
@@ -29,6 +31,8 @@ class Product {
       imageUrl: json['imageUrl'] as String,
       category: json['category'] as String,
       sellerId: json['sellerId'] as String,
+      sellerPhone: json['sellerPhone'] as String? ??
+          '+250780600494', // Default phone if not provided
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }
@@ -43,6 +47,7 @@ class Product {
       'imageUrl': imageUrl,
       'category': category,
       'sellerId': sellerId,
+      'sellerPhone': sellerPhone,
       'createdAt': createdAt.toIso8601String(),
     };
   }

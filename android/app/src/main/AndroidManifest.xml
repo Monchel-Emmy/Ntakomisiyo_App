@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.DIAL_PHONE"/>
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    
     <application
         android:enableOnBackInvokedCallback="true"
         android:label="ntakomisiyo1"
@@ -43,8 +48,4 @@
             <data android:mimeType="text/plain"/>
         </intent>
     </queries>
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.DIAL_PHONE"/>
-    <uses-permission android:name="android.permission.CALL_PHONE" />
-
 </manifest>

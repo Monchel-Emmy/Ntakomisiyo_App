@@ -1,12 +1,15 @@
 import 'package:flutter/foundation.dart';
-import '../data/mock_products.dart';
+import 'package:ntakomisiyo1/models/product.dart';
+import 'package:ntakomisiyo1/data/mock_products.dart';
 
-class ProductProvider extends ChangeNotifier {
+class ProductProvider with ChangeNotifier {
   List<Product> _products = [];
+  List<Product> _userProducts = [];
   bool _isLoading = false;
   String? _error;
 
   List<Product> get products => _products;
+  List<Product> get userProducts => _userProducts;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -16,8 +19,8 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _products = await MockProductService.getAllProducts();
-      _error = null;
+      final products = await MockProductService.getAllProducts();
+      _products = products;
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -26,47 +29,66 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
-  Future<Product?> getProductById(String id) async {
+  Future<void> fetchUserProducts(String userId) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
     try {
-      return await MockProductService.getProductById(id);
+      final products = await MockProductService.getUserProducts(userId);
+      _userProducts = products;
     } catch (e) {
       _error = e.toString();
+    } finally {
+      _isLoading = false;
       notifyListeners();
-      return null;
     }
   }
 
   Future<void> addProduct(Product product) async {
-    try {
-      // For mock data, just add to the list
-      _products.add(product);
-      notifyListeners();
-    } catch (e) {
-      _error = e.toString();
-      notifyListeners();
-    }
-  }
+    _isLoading = true;
+    notifyListeners();
 
-  Future<void> updateProduct(String id, Product product) async {
     try {
-      final index = _products.indexWhere((p) => p.id == id);
-      if (index != -1) {
-        _products[index] = product;
+      final newProduct = await MockProductService.addProduct(
+        name: product.name,
+        price: product.price,
+        description: product.description,
+        imageUrl: product.imageUrl,
+        category: product.category,
+        sellerId: product.sellerId,
+      );
+
+      if (newProduct != null) {
+        _products.add(newProduct);
+        if (newProduct.sellerId == product.sellerId) {
+          _userProducts.add(newProduct);
+        }
         notifyListeners();
       }
     } catch (e) {
       _error = e.toString();
       notifyListeners();
+    } finally {
+      _isLoading = false;
+    }
+  }
+
+  Future<void> updateProduct(Product product) async {
+    final index = _products.indexWhere((p) => p.id == product.id);
+    if (index != -1) {
+      _products[index] = product;
+      final userIndex = _userProducts.indexWhere((p) => p.id == product.id);
+      if (userIndex != -1) {
+        _userProducts[userIndex] = product;
+      }
+      notifyListeners();
     }
   }
 
   Future<void> deleteProduct(String id) async {
-    try {
-      _products.removeWhere((p) => p.id == id);
-      notifyListeners();
-    } catch (e) {
-      _error = e.toString();
-      notifyListeners();
-    }
+    _products.removeWhere((product) => product.id == id);
+    _userProducts.removeWhere((product) => product.id == id);
+    notifyListeners();
   }
 }

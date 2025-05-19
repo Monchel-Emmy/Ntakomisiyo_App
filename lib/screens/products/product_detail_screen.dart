@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:ntakomisiyo1/data/mock_products.dart';
+import 'package:ntakomisiyo1/providers/favorites_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:ntakomisiyo1/models/product.dart';
+import 'package:ntakomisiyo1/services/auth_service.dart';
+import 'dart:convert';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -15,7 +20,7 @@ class ProductDetailScreen extends StatefulWidget {
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool isFavorite = false;
   Future<void> _callSeller(BuildContext context) async {
-    final phoneNumber = '+250780600494';
+    final phoneNumber = widget.product.sellerPhone;
     // Use proper URI encoding for phone numbers
     final Uri phoneUri = Uri.parse('tel:${Uri.encodeComponent(phoneNumber)}');
 
@@ -57,7 +62,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Future<void> _messageOnWhatsApp() async {
-    final phoneNumber = '250780600494'; // Remove the '+' for WhatsApp
+    final phoneNumber = widget.product.sellerPhone
+        .replaceAll('+', ''); // Remove the '+' for WhatsApp
     final message =
         'Hello, I am interested in your product: ${widget.product.name}';
 
@@ -154,24 +160,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ),
                         ),
                       ),
-                      IconButton(
-                        icon: Icon(
-                          isFavorite ? Icons.favorite : Icons.favorite_border,
-                          color: isFavorite ? Colors.red : null,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            isFavorite = !isFavorite;
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(isFavorite
-                                  ? 'Added to favorites'
-                                  : 'Removed from favorites'),
-                              duration: const Duration(seconds: 2),
-                            ),
+                      Consumer<FavoritesProvider>(
+                        builder: (context, favoritesProvider, child) {
+                          return FutureBuilder<bool>(
+                            future:
+                                favoritesProvider.isFavorite(widget.product.id),
+                            builder: (context, snapshot) {
+                              final isFavorite = snapshot.data ?? false;
+                              return IconButton(
+                                icon: Icon(
+                                  isFavorite
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color: isFavorite ? Colors.red : null,
+                                ),
+                                onPressed: () {
+                                  favoritesProvider
+                                      .toggleFavorite(widget.product);
+                                },
+                              );
+                            },
                           );
-                          // TODO: Persist favorite status using a state management solution
                         },
                       ),
                       IconButton(
@@ -230,7 +239,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text("+250780600494"),
+                  Text(widget.product.sellerPhone),
                   const SizedBox(height: 16),
                   Row(
                     children: [
