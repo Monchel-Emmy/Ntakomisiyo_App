@@ -230,72 +230,79 @@ class MockProductService {
     required String sellerId,
   }) async {
     try {
+      print('Making add product request with data:');
+      print('name: $name');
+      print('price: $price');
+      print('description: $description');
+      print('imageUrl: $imageUrl');
+      print('category: $category');
+      print('sellerId: $sellerId');
+
       final response = await http.post(
         Uri.parse('$baseUrl?action=add_product'),
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: json.encode({
+        body: {
           'title': name,
-          'price': price,
           'description': description,
-          'image': imageUrl,
+          'price': price.toString(),
+          'image_url': imageUrl,
           'category': category,
-        }),
+          'seller_id': sellerId,
+          'seller_phone': '+250780600494',
+        },
       );
+
+      print('Response status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final product = json.decode(response.body);
-        final newProduct = Product(
-          id: product['id'].toString(),
-          name: product['title'],
-          price: product['price'].toDouble(),
-          description: product['description'],
-          imageUrl: product['image'],
-          category: product['category'],
-          sellerId: sellerId,
-          sellerPhone: '+250780600494',
-          createdAt: DateTime.now(),
-        );
+        // Check if response is HTML instead of JSON
+        if (response.body.trim().startsWith('<')) {
+          print(
+              'Received HTML response instead of JSON. Response body: ${response.body}');
+          throw Exception('Server returned HTML instead of JSON');
+        }
 
-        // Cache the new product
-        await StorageService.cacheProducts([newProduct]);
-        return newProduct;
+        try {
+          final Map<String, dynamic> data = json.decode(response.body);
+          if (data['success'] == true) {
+            print('Successfully added product to API');
+            // Create a new product with the data we sent
+            final newProduct = Product(
+              id: data['product_id']?.toString() ??
+                  DateTime.now().millisecondsSinceEpoch.toString(),
+              name: name,
+              price: price,
+              description: description,
+              imageUrl: imageUrl,
+              category: category,
+              sellerId: sellerId,
+              sellerPhone: '+250780600494',
+              createdAt: DateTime.now(),
+            );
+
+            // Cache the new product
+            await StorageService.cacheProducts([newProduct]);
+            return newProduct;
+          } else {
+            print('API returned error: ${data['message']}');
+            throw Exception('API returned error: ${data['message']}');
+          }
+        } catch (e) {
+          print('JSON parsing error: $e');
+          print('Response body: ${response.body}');
+          throw Exception('Invalid JSON response from server');
+        }
       }
 
-      // If API fails, create a local product
-      final localProduct = Product(
-        id: 'local_${DateTime.now().millisecondsSinceEpoch}',
-        name: name,
-        price: price,
-        description: description,
-        imageUrl: imageUrl,
-        category: category,
-        sellerId: sellerId,
-        sellerPhone: '+250780600494',
-        createdAt: DateTime.now(),
-      );
-
-      // Cache the local product
-      await StorageService.cacheProducts([localProduct]);
-      return localProduct;
+      print('API request failed with status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      throw Exception('Failed to add product: ${response.statusCode}');
     } catch (e) {
-      // Handle network errors by creating a local product
-      final localProduct = Product(
-        id: 'local_${DateTime.now().millisecondsSinceEpoch}',
-        name: name,
-        price: price,
-        description: description,
-        imageUrl: imageUrl,
-        category: category,
-        sellerId: sellerId,
-        sellerPhone: '+250780600494',
-        createdAt: DateTime.now(),
-      );
-
-      // Cache the local product
-      await StorageService.cacheProducts([localProduct]);
-      return localProduct;
+      print('Error adding product: $e');
+      rethrow;
     }
   }
 
@@ -370,5 +377,106 @@ class MockProductService {
       }
     }
     return [];
+  }
+
+  static Future<bool> deleteProduct(String productId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl?action=delete_product'),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'product_id': productId,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Check if response is HTML instead of JSON
+        if (response.body.trim().startsWith('<')) {
+          print(
+              'Received HTML response instead of JSON. Response body: ${response.body}');
+          throw Exception('Server returned HTML instead of JSON');
+        }
+
+        try {
+          final Map<String, dynamic> data = json.decode(response.body);
+          if (data['success'] == true) {
+            print('Successfully deleted product from API');
+            return true;
+          } else {
+            print('API returned error: ${data['message']}');
+            throw Exception('API returned error: ${data['message']}');
+          }
+        } catch (e) {
+          print('JSON parsing error: $e');
+          print('Response body: ${response.body}');
+          throw Exception('Invalid JSON response from server');
+        }
+      }
+      print('API request failed with status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      throw Exception('Failed to delete product: ${response.statusCode}');
+    } catch (e) {
+      print('Error deleting product: $e');
+      throw Exception('Failed to delete product: $e');
+    }
+  }
+
+  static Future<bool> updateProduct({
+    required String productId,
+    required String name,
+    required double price,
+    required String description,
+    required String imageUrl,
+    required String category,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl?action=edit_product'),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'product_id': productId,
+          'title': name,
+          'description': description,
+          'price': price.toString(),
+          'image_url':
+              imageUrl.isEmpty ? 'assets/images/placeholder.png' : imageUrl,
+          'category': category,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Check if response is HTML instead of JSON
+        if (response.body.trim().startsWith('<')) {
+          print(
+              'Received HTML response instead of JSON. Response body: ${response.body}');
+          throw Exception('Server returned HTML instead of JSON');
+        }
+
+        try {
+          final Map<String, dynamic> data = json.decode(response.body);
+          if (data['success'] == true) {
+            print('Successfully updated product in API');
+            return true;
+          } else {
+            print('API returned error: ${data['message']}');
+            throw Exception('API returned error: ${data['message']}');
+          }
+        } catch (e) {
+          print('JSON parsing error: $e');
+          print('Response body: ${response.body}');
+          throw Exception('Invalid JSON response from server');
+        }
+      }
+      print('API request failed with status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      throw Exception('Failed to update product: ${response.statusCode}');
+    } catch (e) {
+      print('Error updating product: $e');
+      throw Exception('Failed to update product: $e');
+    }
   }
 }

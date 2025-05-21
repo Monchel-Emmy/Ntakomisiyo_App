@@ -8,6 +8,7 @@ import 'package:ntakomisiyo1/screens/auth/login_screen.dart';
 import 'package:ntakomisiyo1/screens/auth/signup_screen.dart';
 import 'package:ntakomisiyo1/screens/products/product_detail_screen.dart';
 import 'package:ntakomisiyo1/models/product.dart';
+import 'package:ntakomisiyo1/screens/products/favorites_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,47 +47,48 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               constraints: const BoxConstraints(),
             ),
-            // Cart button with badge
+            // Favorites button with badge
             Stack(
               clipBehavior: Clip.none,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.shopping_cart, size: 22),
+                  icon: const Icon(Icons.favorite, size: 22),
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ProductListScreen(),
+                        builder: (context) => const FavoritesScreen(),
                       ),
                     );
                   },
-                  tooltip: 'Cart',
+                  tooltip: 'Favorites',
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   constraints: const BoxConstraints(),
                 ),
                 Positioned(
-                  right: 4,
-                  top: 4,
+                  right: 0,
+                  top: 0,
                   child: Consumer<FavoritesProvider>(
                     builder: (context, favoritesProvider, child) {
                       if (favoritesProvider.favorites.isEmpty) {
                         return const SizedBox.shrink();
                       }
                       return Container(
-                        padding: const EdgeInsets.all(2),
+                        padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.blue,
-                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         constraints: const BoxConstraints(
-                          minWidth: 14,
-                          minHeight: 14,
+                          minWidth: 16,
+                          minHeight: 16,
                         ),
                         child: Text(
                           '${favoritesProvider.favorites.length}',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 9,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -217,19 +219,61 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        SizedBox(
-                          height: 100,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: [
-                              _buildCategoryCard(
-                                  'Electronics', Icons.phone_android),
-                              _buildCategoryCard('Fashion', Icons.shopping_bag),
-                              _buildCategoryCard('Home', Icons.home),
-                              _buildCategoryCard('Sports', Icons.sports_soccer),
-                              _buildCategoryCard('Books', Icons.book),
-                            ],
-                          ),
+                        Consumer<ProductProvider>(
+                          builder: (context, productProvider, child) {
+                            // Get unique categories from products
+                            final categories = productProvider.products
+                                .map((p) => p.category)
+                                .toSet()
+                                .toList();
+
+                            if (categories.isEmpty) {
+                              return const Center(
+                                child: Text('No categories available'),
+                              );
+                            }
+
+                            return SizedBox(
+                              height: 100,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: categories.length,
+                                itemBuilder: (context, index) {
+                                  final category = categories[index];
+                                  IconData icon;
+                                  switch (category.toLowerCase()) {
+                                    case 'electronics':
+                                      icon = Icons.phone_android;
+                                      break;
+                                    case 'fashion':
+                                      icon = Icons.shopping_bag;
+                                      break;
+                                    case 'home':
+                                      icon = Icons.home;
+                                      break;
+                                    default:
+                                      icon = Icons.category;
+                                  }
+
+                                  return _buildCategoryCard(
+                                    category,
+                                    icon,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              ProductListScreen(
+                                            category: category,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -277,31 +321,35 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCategoryCard(String title, IconData icon) {
+  Widget _buildCategoryCard(String title, IconData icon,
+      {VoidCallback? onTap}) {
     return Card(
       margin: const EdgeInsets.only(right: 10),
-      child: Container(
-        width: 80,
-        color: const Color.fromARGB(129, 7, 134, 172),
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 30,
-              color: Colors.white,
-            ),
-            const SizedBox(height: 5),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 12,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          width: 80,
+          color: const Color.fromARGB(129, 7, 134, 172),
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 30,
                 color: Colors.white,
               ),
-            ),
-          ],
+              const SizedBox(height: 5),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

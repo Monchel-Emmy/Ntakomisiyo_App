@@ -5,7 +5,12 @@ import 'package:ntakomisiyo1/models/product.dart';
 import 'package:ntakomisiyo1/widgets/product_card.dart';
 
 class ProductListScreen extends StatefulWidget {
-  const ProductListScreen({super.key});
+  final String? category;
+
+  const ProductListScreen({
+    super.key,
+    this.category,
+  });
 
   @override
   State<ProductListScreen> createState() => _ProductListScreenState();
@@ -23,7 +28,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Products'),
+        title: Text(widget.category ?? 'All Products'),
       ),
       body: Consumer<ProductProvider>(
         builder: (context, productProvider, child) {
@@ -39,31 +44,30 @@ class _ProductListScreenState extends State<ProductListScreen> {
             return const Center(child: Text('No products found'));
           }
 
-          return FutureBuilder<List<Product>>(
-            future: Future.value(productProvider.products),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          // Filter products by category if specified
+          final products = widget.category != null
+              ? productProvider.products
+                  .where((p) => p.category == widget.category)
+                  .toList()
+              : productProvider.products;
 
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
+          if (products.isEmpty) {
+            return Center(
+              child: Text('No products found in ${widget.category} category'),
+            );
+          }
 
-              final products = snapshot.data ?? [];
-              return GridView.builder(
-                padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.75,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                ),
-                itemCount: products.length,
-                itemBuilder: (context, index) {
-                  return ProductCard(product: products[index]);
-                },
-              );
+          return GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.75,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+            ),
+            itemCount: products.length,
+            itemBuilder: (context, index) {
+              return ProductCard(product: products[index]);
             },
           );
         },

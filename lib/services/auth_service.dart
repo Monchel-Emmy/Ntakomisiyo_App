@@ -165,4 +165,170 @@ class AuthService {
     final user = await getCurrentUser();
     return user?.isAdmin ?? false;
   }
+
+  static Future<void> updateProfile(User user) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl?action=update_profile'),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'user_id': user.id,
+          'name': user.name,
+          'phone': user.phone,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        if (data['success'] != true) {
+          throw Exception(data['message'] ?? 'Failed to update profile');
+        }
+      } else {
+        throw Exception('Failed to update profile: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error updating profile: $e');
+      throw Exception('Failed to update profile: $e');
+    }
+  }
+
+  static Future<void> updatePassword(
+      String currentPassword, String newPassword) async {
+    try {
+      final currentUser = await getCurrentUser();
+      if (currentUser == null) {
+        throw Exception('User not found');
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl?action=update_password'),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'user_id': currentUser.id,
+          'current_password': currentPassword,
+          'new_password': newPassword,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        if (data['success'] != true) {
+          throw Exception(data['message'] ?? 'Failed to update password');
+        }
+      } else {
+        throw Exception('Failed to update password: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error updating password: $e');
+      throw Exception('Failed to update password: $e');
+    }
+  }
+
+  static Future<List<User>> getAllUsers() async {
+    try {
+      print('Starting getAllUsers...');
+
+      // Get current user
+      final currentUser = await getCurrentUser();
+      print('Current user: ${currentUser?.toJson()}');
+
+      if (currentUser == null) {
+        print('No current user found');
+        throw Exception('Not logged in');
+      }
+
+      if (!currentUser.isAdmin) {
+        print('Current user is not admin');
+        throw Exception('Unauthorized access');
+      }
+
+      final url = '$baseUrl?action=get_users&admin_id=${currentUser.id}';
+      print('Making get_users request to: $url');
+
+      final response = await http.get(Uri.parse(url));
+      print('Response status code: ${response.statusCode}');
+      print('Response headers: ${response.headers}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        // Check if response is empty
+        if (response.body.trim().isEmpty) {
+          print('Empty response received');
+          throw Exception('Empty response from server');
+        }
+
+        // Check if response is HTML instead of JSON
+        if (response.body.trim().startsWith('<')) {
+          print(
+              'Received HTML response instead of JSON. Response body: ${response.body}');
+          throw Exception('Server returned HTML instead of JSON');
+        }
+
+        try {
+          final Map<String, dynamic> data = json.decode(response.body);
+          print('Decoded JSON data: $data');
+
+          if (data['success'] == true && data['users'] != null) {
+            final List<dynamic> users = data['users'];
+            print('Found ${users.length} users');
+
+            final List<User> userList = users.map((user) {
+              print('Processing user: $user');
+              return User(
+                id: user['id'].toString(),
+                name: user['name'],
+                phone: user['phone'],
+                isAdmin: user['is_admin'] == 1,
+              );
+            }).toList();
+
+            print('Successfully processed ${userList.length} users');
+            return userList;
+          } else {
+            print('API returned error: ${data['message']}');
+            throw Exception(data['message'] ?? 'Failed to load users');
+          }
+        } catch (e) {
+          print('JSON parsing error: $e');
+          print('Response body: ${response.body}');
+          throw Exception('Invalid JSON response from server: $e');
+        }
+      }
+      print('Request failed with status: ${response.statusCode}');
+      throw Exception('Failed to load users: ${response.statusCode}');
+    } catch (e) {
+      print('Error in getAllUsers: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteUser(String userId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl?action=delete_user'),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'user_id': userId,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        if (data['success'] != true) {
+          throw Exception(data['message'] ?? 'Failed to delete user');
+        }
+      } else {
+        throw Exception('Failed to delete user');
+      }
+    } catch (e) {
+      print('Error deleting user: $e');
+      rethrow;
+    }
+  }
 }

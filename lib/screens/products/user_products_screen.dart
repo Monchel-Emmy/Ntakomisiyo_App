@@ -4,6 +4,7 @@ import 'package:ntakomisiyo1/providers/product_provider.dart';
 import 'package:ntakomisiyo1/widgets/product_card.dart';
 import 'package:ntakomisiyo1/services/auth_service.dart';
 import 'package:ntakomisiyo1/screens/products/add_product_screen.dart';
+import 'package:ntakomisiyo1/screens/products/edit_product_screen.dart';
 
 class UserProductsScreen extends StatefulWidget {
   const UserProductsScreen({super.key});
@@ -106,10 +107,12 @@ class _UserProductsScreenState extends State<UserProductsScreen> {
                           IconButton(
                             icon: const Icon(Icons.edit, color: Colors.blue),
                             onPressed: () {
-                              // TODO: Navigate to edit product screen
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Edit product coming soon!'),
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => EditProductScreen(
+                                    product: product,
+                                  ),
                                 ),
                               );
                             },
@@ -133,17 +136,32 @@ class _UserProductsScreenState extends State<UserProductsScreen> {
                                     ),
                                     TextButton(
                                       onPressed: () async {
-                                        await productProvider
-                                            .deleteProduct(product.id);
-                                        if (mounted) {
-                                          Navigator.pop(context);
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                  'Product deleted successfully'),
-                                            ),
-                                          );
+                                        try {
+                                          await productProvider
+                                              .deleteProduct(product.id);
+                                          if (mounted) {
+                                            Navigator.pop(context);
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                    'Product deleted successfully'),
+                                                backgroundColor: Colors.green,
+                                              ),
+                                            );
+                                          }
+                                        } catch (e) {
+                                          if (mounted) {
+                                            Navigator.pop(context);
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                    'Error deleting product: ${e.toString()}'),
+                                                backgroundColor: Colors.red,
+                                              ),
+                                            );
+                                          }
                                         }
                                       },
                                       child: const Text(

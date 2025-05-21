@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:ntakomisiyo1/screens/products/add_product_screen.dart';
-import 'package:ntakomisiyo1/screens/products/product_list_screen.dart';
 import 'package:ntakomisiyo1/screens/products/user_products_screen.dart';
+import 'package:ntakomisiyo1/screens/products/add_product_screen.dart';
+import 'package:ntakomisiyo1/screens/user/profile_screen.dart';
 import 'package:ntakomisiyo1/services/auth_service.dart';
 import 'package:ntakomisiyo1/models/user.dart';
+import 'package:ntakomisiyo1/screens/auth/login_screen.dart';
+
+import '../products/product_list_screen.dart';
 
 class UserDashboard extends StatefulWidget {
   final User user;
@@ -15,6 +18,33 @@ class UserDashboard extends StatefulWidget {
 }
 
 class _UserDashboardState extends State<UserDashboard> {
+  Widget _buildActionCard(
+    BuildContext context,
+    String title,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
+    return Card(
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 40, color: Theme.of(context).primaryColor),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,7 +56,11 @@ class _UserDashboardState extends State<UserDashboard> {
             onPressed: () async {
               await AuthService.logout();
               if (mounted) {
-                Navigator.of(context).pushReplacementNamed('/');
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
+                );
               }
             },
           ),
@@ -106,20 +140,13 @@ class _UserDashboardState extends State<UserDashboard> {
                 ),
                 _buildActionCard(
                   context,
-                  'All products',
-                  Icons.shopping_cart,
+                  'All Products',
+                  Icons.all_inbox,
                   () {
-                    // TODO: Navigate to orders
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const ProductListScreen(),
-                      ),
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                            'This is all products available on our market!'),
                       ),
                     );
                   },
@@ -128,43 +155,28 @@ class _UserDashboardState extends State<UserDashboard> {
                   context,
                   'Profile',
                   Icons.person,
-                  () {
-                    // TODO: Navigate to profile
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Profile management coming soon!'),
+                  () async {
+                    final updatedUser = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProfileScreen(user: widget.user),
                       ),
                     );
+                    if (updatedUser != null) {
+                      setState(() {
+                        // Create a new UserDashboard with the updated user
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                UserDashboard(user: updatedUser),
+                          ),
+                        );
+                      });
+                    }
                   },
                 ),
               ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionCard(
-    BuildContext context,
-    String title,
-    IconData icon,
-    VoidCallback onTap,
-  ) {
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 40, color: Theme.of(context).primaryColor),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
             ),
           ],
         ),

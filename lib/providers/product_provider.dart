@@ -75,20 +75,60 @@ class ProductProvider with ChangeNotifier {
   }
 
   Future<void> updateProduct(Product product) async {
-    final index = _products.indexWhere((p) => p.id == product.id);
-    if (index != -1) {
-      _products[index] = product;
-      final userIndex = _userProducts.indexWhere((p) => p.id == product.id);
-      if (userIndex != -1) {
-        _userProducts[userIndex] = product;
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final success = await MockProductService.updateProduct(
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        description: product.description,
+        imageUrl: product.imageUrl,
+        category: product.category,
+      );
+
+      if (success) {
+        final index = _products.indexWhere((p) => p.id == product.id);
+        if (index != -1) {
+          _products[index] = product;
+          final userIndex = _userProducts.indexWhere((p) => p.id == product.id);
+          if (userIndex != -1) {
+            _userProducts[userIndex] = product;
+          }
+          notifyListeners();
+        }
       }
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      rethrow; // Rethrow to handle in the UI
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
 
   Future<void> deleteProduct(String id) async {
-    _products.removeWhere((product) => product.id == id);
-    _userProducts.removeWhere((product) => product.id == id);
+    _isLoading = true;
+    _error = null;
     notifyListeners();
+
+    try {
+      final success = await MockProductService.deleteProduct(id);
+      if (success) {
+        _products.removeWhere((product) => product.id == id);
+        _userProducts.removeWhere((product) => product.id == id);
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      rethrow; // Rethrow to handle in the UI
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }
