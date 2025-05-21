@@ -4,6 +4,9 @@ import 'package:ntakomisiyo1/screens/admin/users_screen.dart';
 import 'package:ntakomisiyo1/screens/admin/categories_screen.dart';
 import 'package:ntakomisiyo1/screens/admin/reports_screen.dart';
 
+import '../../services/auth_service.dart';
+import '../home/home_screen.dart';
+
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
 
@@ -12,6 +15,21 @@ class AdminDashboard extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Admin Dashboard'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await AuthService.logout();
+              // if (mounted) {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const HomeScreen()),
+                (route) => false,
+              );
+              // }
+            },
+          ),
+        ],
       ),
       body: GridView.count(
         padding: const EdgeInsets.all(16),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ntakomisiyo1/screens/home/home_screen.dart';
 import 'package:ntakomisiyo1/screens/products/user_products_screen.dart';
 import 'package:ntakomisiyo1/screens/products/add_product_screen.dart';
 import 'package:ntakomisiyo1/screens/user/profile_screen.dart';
@@ -58,7 +59,7 @@ class _UserDashboardState extends State<UserDashboard> {
               if (mounted) {
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  MaterialPageRoute(builder: (context) => const HomeScreen()),
                   (route) => false,
                 );
               }

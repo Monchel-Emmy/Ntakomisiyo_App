@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:ntakomisiyo1/services/storage_service.dart';
 import 'package:ntakomisiyo1/models/product.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:ntakomisiyo1/services/firebase_messaging_service.dart';
 
 // Mock data that simulates API response
 final List<Product> mockProducts = [
@@ -56,6 +58,9 @@ class MockProductService {
   static const String baseUrl = 'http://parkingtest.atwebpages.com/api.php';
   static const int maxRetries = 2;
   static const Duration retryDelay = Duration(seconds: 2);
+
+  static final FlutterLocalNotificationsPlugin _notifications =
+      FlutterLocalNotificationsPlugin();
 
   static Future<List<Product>> getAllProducts() async {
     int retryCount = 0;
@@ -251,54 +256,60 @@ class MockProductService {
           'category': category,
           'seller_id': sellerId,
           'seller_phone': '+250780600494',
+          // sellerPhone: product['seller_phone'] ?? '+250780600494',
         },
       );
 
       print('Response status code: ${response.statusCode}');
       print('Response body: ${response.body}');
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        // Check if response is HTML instead of JSON
-        if (response.body.trim().startsWith('<')) {
-          print(
-              'Received HTML response instead of JSON. Response body: ${response.body}');
-          throw Exception('Server returned HTML instead of JSON');
-        }
-
-        try {
-          final Map<String, dynamic> data = json.decode(response.body);
-          if (data['success'] == true) {
-            print('Successfully added product to API');
-            // Create a new product with the data we sent
-            final newProduct = Product(
-              id: data['product_id']?.toString() ??
-                  DateTime.now().millisecondsSinceEpoch.toString(),
-              name: name,
-              price: price,
-              description: description,
-              imageUrl: imageUrl,
-              category: category,
-              sellerId: sellerId,
-              sellerPhone: '+250780600494',
-              createdAt: DateTime.now(),
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        if (data['success'] == true) {
+          // Show local notification after successful product addition
+          try {
+            print('Showing local notification for new product...');
+            await FirebaseMessagingService.notifications.show(
+              DateTime.now().millisecond,
+              'Hello, New Product Added! 🎉',
+              '$name has been added with price $price',
+              NotificationDetails(
+                android: AndroidNotificationDetails(
+                  'product_channel',
+                  'Product Notifications',
+                  channelDescription: 'Notifications for product updates',
+                  importance: Importance.max,
+                  priority: Priority.high,
+                  icon: '@mipmap/ic_launcher',
+                ),
+                iOS: const DarwinNotificationDetails(),
+              ),
+              payload: json.encode({
+                'product_id': data['product_id'],
+                'category': category,
+                'type': 'new_product',
+              }),
             );
-
-            // Cache the new product
-            await StorageService.cacheProducts([newProduct]);
-            return newProduct;
-          } else {
-            print('API returned error: ${data['message']}');
-            throw Exception('API returned error: ${data['message']}');
+            print('Local notification shown successfully');
+          } catch (e) {
+            print('Error showing local notification: $e');
           }
-        } catch (e) {
-          print('JSON parsing error: $e');
-          print('Response body: ${response.body}');
-          throw Exception('Invalid JSON response from server');
+
+          return Product(
+            id: data['product_id'].toString(),
+            name: name,
+            price: price,
+            description: description,
+            imageUrl: imageUrl,
+            category: category,
+            sellerId: sellerId,
+            sellerPhone: '+250780600494',
+            createdAt: DateTime.now(),
+          );
+        } else {
+          throw Exception(data['message'] ?? 'Failed to add product');
         }
       }
-
-      print('API request failed with status: ${response.statusCode}');
-      print('Response body: ${response.body}');
       throw Exception('Failed to add product: ${response.statusCode}');
     } catch (e) {
       print('Error adding product: $e');

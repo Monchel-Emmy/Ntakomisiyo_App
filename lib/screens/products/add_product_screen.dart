@@ -163,7 +163,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Price',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.attach_money),
+                  prefixIcon: Icon(Icons.money),
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
