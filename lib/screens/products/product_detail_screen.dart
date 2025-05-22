@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:ntakomisiyo1/models/product.dart';
 import 'package:ntakomisiyo1/services/auth_service.dart';
+import 'package:share_plus/share_plus.dart';
 import 'dart:convert';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -19,9 +20,10 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool isFavorite = false;
+
   Future<void> _callSeller(BuildContext context) async {
     final phoneNumber = widget.product.sellerPhone;
-    // Use proper URI encoding for phone numbers
+
     final Uri phoneUri = Uri.parse('tel:${Uri.encodeComponent(phoneNumber)}');
 
     try {
@@ -185,8 +187,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.share),
-                        onPressed: () {
-                          // Share product
+                        onPressed: () async {
+                          try {
+                            final shareText = '''
+Check out this product on NtaKomisiyo!
+
+${widget.product.name}
+Price: frw ${widget.product.price.toStringAsFixed(2)}
+Category: ${widget.product.category}
+
+Description:
+${widget.product.description}
+
+Contact seller: ${widget.product.sellerPhone}
+''';
+                            await Share.share(shareText,
+                                subject: 'NtaKomisiyo Product');
+                          } catch (e) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    'Error sharing product: ${e.toString()}'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         },
                       ),
                     ],
