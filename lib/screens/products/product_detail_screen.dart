@@ -7,6 +7,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:ntakomisiyo1/models/product.dart';
 import 'package:ntakomisiyo1/services/auth_service.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'dart:convert';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -22,26 +23,35 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool isFavorite = false;
 
   Future<void> _callSeller(BuildContext context) async {
-    final phoneNumber = widget.product.sellerPhone;
-
-    final Uri phoneUri = Uri.parse('tel:${Uri.encodeComponent(phoneNumber)}');
-
     try {
-      // First check if we can launch
-      if (await canLaunchUrl(phoneUri)) {
-        // Launch with mode that forces external application
-        await launchUrl(
-          phoneUri,
-          mode: LaunchMode.externalApplication,
-        );
-      } else {
+      // Format phone number - remove any spaces, dashes, or parentheses
+      String phoneNumber = widget.product.sellerPhone
+          .replaceAll(RegExp(r'[\s\-\(\)]'), '')
+          .trim();
+
+      // Remove any leading zeros
+      if (phoneNumber.startsWith('0')) {
+        phoneNumber = phoneNumber.substring(1);
+      }
+
+      // Ensure the number starts with +250
+      if (!phoneNumber.startsWith('+')) {
+        phoneNumber = '+250$phoneNumber';
+      }
+
+      // Create the phone URI
+      final Uri phoneUri = Uri.parse('tel:$phoneNumber');
+
+      // Try to launch the phone app
+      if (!await launchUrl(phoneUri, mode: LaunchMode.externalApplication)) {
         if (!mounted) return;
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Phone Call'),
+            title: const Text('Cannot Make Call'),
             content: const Text(
-                'Unable to make the call. Please check if you have granted phone call permissions to the app.'),
+              'Unable to make the call. Please try again or contact the seller through WhatsApp.',
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -57,6 +67,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to make phone call: ${e.toString()}'),
+          backgroundColor: Colors.red,
           duration: const Duration(seconds: 3),
         ),
       );
@@ -64,31 +75,35 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Future<void> _messageOnWhatsApp() async {
-    final phoneNumber = widget.product.sellerPhone
-        .replaceAll('+', ''); // Remove the '+' for WhatsApp
-    final message =
-        'Hello, I am interested in your product: ${widget.product.name}';
-
-    // Try the universal WhatsApp URL format
-    final whatsappUrl = Uri.parse(
-        'whatsapp://send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}');
-
     try {
-      if (await canLaunchUrl(whatsappUrl)) {
-        await launchUrl(
-          whatsappUrl,
-          mode: LaunchMode.externalApplication,
-        );
-      } else {
-        // Fallback to web URL if WhatsApp app URL fails
-        final webWhatsappUrl = Uri.parse(
-            'https://api.whatsapp.com/send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}');
-        if (await canLaunchUrl(webWhatsappUrl)) {
-          await launchUrl(
-            webWhatsappUrl,
-            mode: LaunchMode.externalApplication,
-          );
-        } else {
+      // Format phone number - remove any spaces, dashes, or parentheses
+      String phoneNumber = widget.product.sellerPhone
+          .replaceAll(RegExp(r'[\s\-\(\)]'), '')
+          .trim();
+
+      // Remove any leading zeros
+      if (phoneNumber.startsWith('0')) {
+        phoneNumber = phoneNumber.substring(1);
+      }
+
+      // Ensure the number starts with +250
+      if (!phoneNumber.startsWith('+')) {
+        phoneNumber = '+250$phoneNumber';
+      }
+
+      final message =
+          'Hello, I am interested in your product: ${widget.product.name}';
+      final encodedMessage = Uri.encodeComponent(message);
+
+      // Try WhatsApp app URL
+      final whatsappUrl =
+          Uri.parse('whatsapp://send?phone=$phoneNumber&text=$encodedMessage');
+
+      if (!await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication)) {
+        // Fallback to web URL
+        final webUrl =
+            Uri.parse('https://wa.me/$phoneNumber?text=$encodedMessage');
+        if (!await launchUrl(webUrl, mode: LaunchMode.externalApplication)) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -190,15 +205,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         onPressed: () async {
                           try {
                             final shareText = '''
-Check out this product on NtaKomisiyo!
-
+Check out this product on NtaKomisiyo1 App!
 ${widget.product.name}
-Price: frw ${widget.product.price.toStringAsFixed(2)}
+Price: ${widget.product.price.toStringAsFixed(2)} frw 
 Category: ${widget.product.category}
-
 Description:
 ${widget.product.description}
-
 Contact seller: ${widget.product.sellerPhone}
 ''';
                             await Share.share(shareText,
