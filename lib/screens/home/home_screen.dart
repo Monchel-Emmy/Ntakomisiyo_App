@@ -9,6 +9,7 @@ import 'package:ntakomisiyo1/screens/auth/signup_screen.dart';
 import 'package:ntakomisiyo1/screens/products/product_detail_screen.dart';
 import 'package:ntakomisiyo1/models/product.dart';
 import 'package:ntakomisiyo1/screens/products/favorites_screen.dart';
+import 'package:ntakomisiyo1/screens/products/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -43,7 +44,12 @@ class _HomeScreenState extends State<HomeScreen> {
             IconButton(
               icon: const Icon(Icons.search, size: 22),
               onPressed: () {
-                // TODO: Implement search functionality
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SearchScreen(),
+                  ),
+                );
               },
               tooltip: 'Search',
               padding: const EdgeInsets.symmetric(horizontal: 8),
