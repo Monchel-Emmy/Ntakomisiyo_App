@@ -57,6 +57,7 @@ class ProductProvider with ChangeNotifier {
         imageUrl: product.imageUrl,
         category: product.category,
         sellerId: product.sellerId,
+        sellerPhone: product.sellerPhone,
       );
 
       if (newProduct != null) {

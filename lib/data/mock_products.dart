@@ -233,6 +233,7 @@ class MockProductService {
     required String imageUrl,
     required String category,
     required String sellerId,
+    required String sellerPhone,
   }) async {
     try {
       print('Making add product request with data:');
@@ -242,6 +243,7 @@ class MockProductService {
       print('imageUrl: $imageUrl');
       print('category: $category');
       print('sellerId: $sellerId');
+      print('sellerPhone: $sellerPhone');
 
       final response = await http.post(
         Uri.parse('$baseUrl?action=add_product'),
@@ -255,8 +257,7 @@ class MockProductService {
           'image_url': imageUrl,
           'category': category,
           'seller_id': sellerId,
-          'seller_phone': '+250780600494',
-          // sellerPhone: product['seller_phone'] ?? '+250780600494',
+          'seller_phone': sellerPhone,
         },
       );
 
@@ -272,7 +273,7 @@ class MockProductService {
             await FirebaseMessagingService.notifications.show(
               DateTime.now().millisecond,
               'Hello, New Product Added! 🎉',
-              '$name has been added with price $price',
+              '$name has been added with price $price\nContact seller: $sellerPhone',
               NotificationDetails(
                 android: AndroidNotificationDetails(
                   'product_channel',
@@ -288,6 +289,7 @@ class MockProductService {
                 'product_id': data['product_id'],
                 'category': category,
                 'type': 'new_product',
+                'seller_phone': sellerPhone,
               }),
             );
             print('Local notification shown successfully');
@@ -303,7 +305,7 @@ class MockProductService {
             imageUrl: imageUrl,
             category: category,
             sellerId: sellerId,
-            sellerPhone: '+250780600494',
+            sellerPhone: sellerPhone,
             createdAt: DateTime.now(),
           );
         } else {
