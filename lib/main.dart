@@ -9,6 +9,7 @@ import 'package:ntakomisiyo1/screens/user/user_dashboard.dart';
 import 'package:ntakomisiyo1/services/auth_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:ntakomisiyo1/services/firebase_messaging_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

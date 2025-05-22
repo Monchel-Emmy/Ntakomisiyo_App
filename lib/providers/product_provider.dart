@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:ntakomisiyo1/models/product.dart';
 import 'package:ntakomisiyo1/data/mock_products.dart';
+import 'package:ntakomisiyo1/services/cloudinary_service.dart';
+import 'dart:io';
 
 class ProductProvider with ChangeNotifier {
   List<Product> _products = [];
@@ -45,16 +47,23 @@ class ProductProvider with ChangeNotifier {
     }
   }
 
-  Future<void> addProduct(Product product) async {
+  Future<void> addProduct(Product product, File? imageFile) async {
     _isLoading = true;
     notifyListeners();
 
     try {
+      String imageUrl = 'assets/images/placeholder.png';
+
+      // Upload image to Cloudinary if provided
+      if (imageFile != null) {
+        imageUrl = await CloudinaryService.uploadImage(imageFile);
+      }
+
       final newProduct = await MockProductService.addProduct(
         name: product.name,
         price: product.price,
         description: product.description,
-        imageUrl: product.imageUrl,
+        imageUrl: imageUrl,
         category: product.category,
         sellerId: product.sellerId,
         sellerPhone: product.sellerPhone,

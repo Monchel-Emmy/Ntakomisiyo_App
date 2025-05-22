@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:ntakomisiyo1/providers/product_provider.dart';
 import 'package:ntakomisiyo1/models/product.dart';
 import 'package:ntakomisiyo1/services/auth_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -18,6 +20,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _descriptionController = TextEditingController();
   String? selectedCategory;
   bool _isLoading = false;
+  File? _imageFile;
 
   final List<String> categories = [
     'Electronics',
@@ -40,6 +43,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      setState(() {
+        _imageFile = File(image.path);
+      });
+    }
+  }
+
   Future<void> _addProduct() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -57,18 +71,18 @@ class _AddProductScreenState extends State<AddProductScreen> {
         }
 
         final product = Product(
-          id: DateTime.now().millisecondsSinceEpoch.toString(), // Temporary ID
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
           name: _nameController.text,
           price: double.parse(_priceController.text),
           description: _descriptionController.text,
-          imageUrl: 'assets/images/placeholder.png', // Default image
+          imageUrl: 'assets/images/placeholder.png',
           category: selectedCategory ?? 'Other',
           sellerId: user.id,
-          sellerPhone: user.phone, // Use the user's phone number
+          sellerPhone: user.phone,
           createdAt: DateTime.now(),
         );
 
-        await context.read<ProductProvider>().addProduct(product);
+        await context.read<ProductProvider>().addProduct(product, _imageFile);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -124,16 +138,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.add_a_photo, size: 40),
-                        onPressed: () {
-                          // TODO: Implement image picker
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Image upload coming soon!'),
-                            ),
-                          );
-                        },
+                        onPressed: _pickImage,
                       ),
                       const Text('Add Product Image'),
+                      if (_imageFile != null)
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Image.file(_imageFile!, height: 100),
+                        ),
                     ],
                   ),
                 ),

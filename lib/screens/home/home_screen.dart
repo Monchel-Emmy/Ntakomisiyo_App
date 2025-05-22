@@ -21,9 +21,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch products when the screen is initialized
-    Future.microtask(() =>
-        Provider.of<ProductProvider>(context, listen: false).fetchProducts());
+    // Fetch products and favorites when the screen is initialized
+    Future.microtask(() {
+      Provider.of<ProductProvider>(context, listen: false).fetchProducts();
+      Provider.of<FavoritesProvider>(context, listen: false).loadFavorites();
+    });
   }
 
   @override
@@ -77,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
                           color: Colors.red,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         constraints: const BoxConstraints(
                           minWidth: 16,
