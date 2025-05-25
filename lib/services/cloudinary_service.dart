@@ -3,8 +3,8 @@ import 'package:cloudinary_public/cloudinary_public.dart';
 
 class CloudinaryService {
   static final cloudinary = CloudinaryPublic(
-    'dwsufddrz', // Your cloud name
-    'ntakomisiyo', // Your upload preset
+    'dwsufddrz', // cloud name
+    'ntakomisiyo', // upload preset
     cache: false,
   );
   static Future<String> uploadImage(File imageFile) async {

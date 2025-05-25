@@ -32,7 +32,7 @@ class Product {
       category: json['category'] as String,
       sellerId: json['sellerId'] as String,
       sellerPhone: json['sellerPhone'] as String? ??
-          '+250780600494', // Default phone if not provided
+          '+250780600494', // default phone if not provided
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }
